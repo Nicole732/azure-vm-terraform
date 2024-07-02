@@ -3,23 +3,38 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.0.0"
+      version = "~>2.0"
     }
   }
-  required_version = ">=1.5.1"
+  required_version = ">=0.12"
 }
 provider "azurerm" {
-  features {}
+  features {
+    resource_group {
+
+      prevent_deletion_if_contains_resources = false
+    }
+  }
 }
 
 ## Defines the Virtual Machine configurations
+variable "admin_user" {
+  description = "User name to use as the admin account on the VMs that will be part of the VM scale set"
+  default     = "azureuser"
+}
+
+variable "admin_pw" {
+  description = "Default password for admin account"
+  default     = "ChangeMe123!"
+  sensitive   = true
+}
 variable "prefix" {
-  default = "tfvmlearning"
+  default = "tfvml"
 }
 
 resource "azurerm_resource_group" "rg" {
   name     = "${var.prefix}-rg-terraform-vm"
-  location = "eastus"
+  location = "westus"
 }
 
 resource "azurerm_virtual_network" "main" {
@@ -53,11 +68,12 @@ resource "azurerm_virtual_machine" "main" {
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.main.id]
-  vm_size               = "Standard_DS1_v2"
+  vm_size               = "Standard_DS1_v2" #az vm list-sizes --location eastus2 --output table
+  #use "az vm image list --location westus" to 
   storage_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
   storage_os_disk {
@@ -68,8 +84,8 @@ resource "azurerm_virtual_machine" "main" {
   }
   os_profile {
     computer_name  = "hostname"
-    admin_username = "testadmin"
-    admin_password = "Password1234!"
+    admin_username = var.admin_user
+    admin_password = var.admin_pw
   }
   os_profile_linux_config {
     disable_password_authentication = false
