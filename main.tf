@@ -20,12 +20,11 @@ provider "azurerm" {
 ## Defines the Virtual Machine configurations
 variable "admin_user" {
   description = "User name to use as the admin account on the VMs that will be part of the VM scale set"
-  default     = "azureuser"
+  sensitive   = true
 }
 
 variable "admin_pw" {
   description = "Default password for admin account"
-  default     = "ChangeMe123!"
   sensitive   = true
 }
 variable "prefix" {
